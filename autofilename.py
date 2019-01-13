@@ -215,6 +215,9 @@ class FileNameComplete(sublime_plugin.EventListener):
         sel = view.sel()[0].a
         this_dir = ""
         completions = []
+        
+        if "string.regexp.js" in view.scope_name(sel):
+            return []
 
         if uses_keybinding and not FileNameComplete.is_active:
             return
