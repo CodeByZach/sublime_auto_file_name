@@ -22,13 +22,13 @@ Usage
 For example:
 
 If you are looking to autocomplete an image path in an HTML `<img>` tag:
-    `<img src="../|" />`
+	`<img src="../|" />`
 
 AutoFileName will display a list of files without you having to do anything. As you type, the results will narrow. The list will automatically update as you enter a new directory so you don't have to do a thing.
 
 Settings
 --------
-There are some options now. 
+There are some options now.
 
 Perhaps you're working on a website and all the image files are relative to the project root instead of the Computer's root directory. No worries. Just tell AutoFileName the project root. (More info in the settings file.)
 

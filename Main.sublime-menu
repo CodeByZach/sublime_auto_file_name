@@ -1,35 +1,39 @@
 [
-    {
-        "caption": "Preferences",
-        "mnemonic": "n",
-        "id": "preferences",
-        "children":
-        [
-            {
-                "caption": "Package Settings",
-                "mnemonic": "P",
-                "id": "package-settings",
-                "children":
-                [
-                    {
-                        "caption": "AutoFileName",
-                        "children":
-                        [
-                            {
-                                "command": "open_file", 
-                                "args": {"file": "${packages}/AutoFileName/autofilename.sublime-settings"},
-                                "caption": "Settings – Default"
-                            },
-                            {
-                                "command": "open_file", 
-                                "args": {"file": "${packages}/User/Preferences.sublime-settings"},
-                                "caption": "Settings – User"
-                            },
-                            { "caption": "-" }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
+	{
+		"caption": "Preferences",
+		"mnemonic": "n",
+		"id": "preferences",
+		"children":
+		[
+			{
+				"caption": "Package Settings",
+				"mnemonic": "P",
+				"id": "package-settings",
+				"children":
+				[
+					{
+						"caption": "AutoFileName",
+						"children":
+						[
+							{
+								"caption": "Settings",
+								"command": "edit_settings", "args": {
+									"base_file": "${packages}/AutoFileName/autofilename.sublime-settings",
+									"default": "{\n$0\n}\n"
+								}
+							},
+							{ "caption": "-" },
+							{
+								"caption": "README",
+								"command": "open_file", "args":
+								{
+									"file": "${packages}/AutoFileName/README.md"
+								}
+							}
+						]
+					}
+				]
+			}
+		]
+	}
 ]
