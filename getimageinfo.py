@@ -10,9 +10,9 @@ def getImageInfo(data):
 	width = -1
 	content_type = ''
 
-	# handle GIFs
+	# Handle GIFs.
 	if (size >= 10) and data[:6] == b'GIF89a':
-		# Check to see if content_type is correct
+		# Check to see if content_type is correct.
 		content_type = 'image/gif'
 		w, h = struct.unpack("<HH", data[6:10])
 		width = int(w)
@@ -29,12 +29,12 @@ def getImageInfo(data):
 
 	# Maybe this is for an older PNG version.
 	elif (size >= 16) and data[:8] == b'\211PNG\r\n\032\n':
-		# Check to see if we have the right content type
+		# Check to see if we have the right content type.
 		w, h = struct.unpack(">LL", data[8:16])
 		width = int(w)
 		height = int(h)
 
-	# handle JPEGs
+	# Handle JPEGs.
 	elif (size >= 2) and data[:2] == b'\377\330':
 		jpeg = io.BytesIO(data)
 
