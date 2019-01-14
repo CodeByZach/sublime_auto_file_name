@@ -1,6 +1,6 @@
 import sublime
 import sublime_plugin
-
+import re
 import os
 import ctypes
 import platform
@@ -9,24 +9,24 @@ import string
 import time
 from .getimageinfo import getImageInfo
 
+g_auto_completions = []
+verbose_debugging = sublime.load_settings('autofilename.sublime-settings').get('console_debugging')
+MAXIMUM_WAIT_TIME = 0.3
+
 def msg(msg):
 	print("[AutoFileName] %s" % msg)
 
 def debug(msg):
-	if self.get_setting('console_debugging') == True
-		msg("[DEBUG] %s" % msg)
+	if verbose_debugging == True:
+		print("[AutoFileName][DEBUG] %s" % msg)
 
-g_auto_completions = []
-MAXIMUM_WAIT_TIME = 0.3
 
 
 
 class AfnShowFilenames(sublime_plugin.TextCommand):
 	def run(self, edit):
 		FileNameComplete.is_active = True
-		self.view.run_command('auto_complete',
-				{'disable_auto_insert': True,
-				'next_completion_if_showing': False})
+		self.view.run_command('auto_complete', {'disable_auto_insert': True, 'next_completion_if_showing': False})
 
 
 
@@ -64,10 +64,13 @@ class AfnSettingsPanel(sublime_plugin.WindowCommand):
 # Used to remove the / or \ when autocompleting a Windows drive (eg. /C:/path).
 class AfnDeletePrefixedSlash(sublime_plugin.TextCommand):
 	def run(self, edit):
-		selection = self.view.sel()[0].a
-		length = 5 if (self.view.substr(sublime.Region(selection-5,selection-3)) == '\\\\') else 4
-		reg = sublime.Region(selection-length,selection-3)
-		self.view.erase(edit, reg)
+		selection = getSelection(view)
+		if selection != False:
+			debug("AfnDeletePrefixedSlash")
+			selectionStart = selection.a
+			length = 5 if (self.view.substr(sublime.Region(selectionStart-5,selectionStart-3)) == '\\\\') else 4
+			reg = sublime.Region(selectionStart-length,selectionStart-3)
+			self.view.erase(edit, reg)
 
 
 
@@ -77,14 +80,16 @@ class InsertDimensionsCommand(sublime_plugin.TextCommand):
 
 	def insert_dimension(self, edit, dim, name, tag_scope):
 		view = self.view
-		selection = view.sel()[0].a
+		selection = getSelection(view)
+		if selection != False:
+			selectionStart = selection.a
 
-		if name in view.substr(tag_scope):
-			reg = view.find('(?<='+name+'\=)\s*\"\d{1,5}', tag_scope.a)
-			view.replace(edit, reg, '"'+str(dim))
-		else:
-			dimension = str(dim)
-			view.insert(edit, selection+1, ' '+name+'="'+dimension+'"')
+			if name in view.substr(tag_scope):
+				reg = view.find('(?<='+name+'\=)\s*\"\d{1,5}', tag_scope.a)
+				view.replace(edit, reg, '"'+str(dim))
+			else:
+				dimension = str(dim)
+				view.insert(edit, selectionStart+1, ' '+name+'="'+dimension+'"')
 
 
 	def get_setting(self, string, view=None):
@@ -105,7 +110,7 @@ class InsertDimensionsCommand(sublime_plugin.TextCommand):
 			self.insert_dimension(edit,h,'height', scope)
 
 
-	# Determines if there is a template tag in a given region.  supports HTML and template languages.
+	# Determines if there is a template tag in a given region. Supports HTML and template languages.
 	def img_tag_in_region(self, region):
 		view = self.view
 
@@ -116,27 +121,29 @@ class InsertDimensionsCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		view = self.view
 		view.run_command("commit_completion")
-		selection = view.sel()[0].a
+		selection = getSelection(view)
+		if selection != False:
+			selectionStart = selection.a
 
-		if not 'html' in view.scope_name(selection): return
-		scope = view.extract_scope(selection-1)
+			if not 'html' in view.scope_name(selectionStart): return
+			scope = view.extract_scope(selectionStart-1)
 
-		# If using a template language, the scope is set to the current line.
-		tag_scope = view.line(selection) if self.get_setting('afn_template_languages',view) else view.extract_scope(scope.a-1)
+			# If using a template language, the scope is set to the current line.
+			tag_scope = view.line(selectionStart) if self.get_setting('afn_template_languages',view) else view.extract_scope(scope.a-1)
 
-		path = view.substr(scope)
-		if path.startswith(("'","\"","(")):
-			path = path[1:-1]
+			path = view.substr(scope)
+			if path.startswith(("'","\"","(")):
+				path = path[1:-1]
 
-		path = path[path.rfind(FileNameComplete.sep):] if FileNameComplete.sep in path else path
-		full_path = self.this_dir + path
+			path = path[path.rfind(FileNameComplete.sep):] if FileNameComplete.sep in path else path
+			full_path = self.this_dir + path
 
-		if self.img_tag_in_region(tag_scope) and path.endswith(('.png','.jpg','.jpeg','.gif')):
-			with open(full_path,'rb') as r:
-				read_data = r.read() if path.endswith(('.jpg','.jpeg')) else r.read(24)
-			w, h = getImageInfo(read_data)
+			if self.img_tag_in_region(tag_scope) and path.endswith(('.png','.jpg','.jpeg','.gif')):
+				with open(full_path,'rb') as r:
+					read_data = r.read() if path.endswith(('.jpg','.jpeg')) else r.read(24)
+				w, h = getImageInfo(read_data)
 
-			self.insert_dimensions(edit, tag_scope, w, h)
+				self.insert_dimensions(edit, tag_scope, w, h)
 
 
 
@@ -144,17 +151,21 @@ class InsertDimensionsCommand(sublime_plugin.TextCommand):
 class ReloadAutoCompleteCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		view = self.view
-		view.run_command('hide_auto_complete')
-		view.run_command('left_delete')
-		selection = view.sel()[0].a
+		selection = getSelection(view)
+		if selection != False:
+			if not allow_to_continue(view, selection):
+				return
+			debug("ReloadAutoCompleteCommand")
+			view.run_command('hide_auto_complete')
+			view.run_command('left_delete')
 
-		scope = view.extract_scope(selection-1)
-		scope_text = view.substr(scope)
-		slash_pos = scope_text[:selection - scope.a].rfind(FileNameComplete.sep)
-		slash_pos += 1 if slash_pos < 0 else 0
-
-		region = sublime.Region(scope.a+slash_pos+1,selection)
-		view.sel().add(region)
+			selectionStart = selection.a
+			scope = view.extract_scope(selectionStart-1)
+			scope_text = view.substr(scope)
+			slash_pos = scope_text[:selectionStart - scope.a].rfind(FileNameComplete.sep)
+			slash_pos += 1 if slash_pos < 0 else 0
+			region = sublime.Region(scope.a+slash_pos+1,selectionStart-1)
+			view.sel().add(region)
 
 
 
@@ -176,13 +187,45 @@ def disable_autocomplete():
 
 
 
+def getSelection(view):
+	selections = view.sel()
+	if len(selections) > 0:
+		return selections[0]
+	else:
+		return False
+
+
+
+def in_supported_tag(view, selection):
+	supportedTags = ["src", "url", "href"]
+	tagRegex = '(\w+)(?:(?=\W)\S)+$'
+	viewContent = view.substr(sublime.Region(0, view.extract_scope(selection.a).a))
+
+	matches = re.search(tagRegex, viewContent, re.IGNORECASE)
+	if matches != None:
+		return matches.group(1) in supportedTags
+	else:
+		return False
+
+
+
+def allow_to_continue(view, selection):
+	if not in_supported_tag(view, selection):
+		if not sublime.load_settings('autofilename.sublime-settings').get('afn_use_keybinding'):
+			return False
+	return True
+
+
+
 class FileNameComplete(sublime_plugin.EventListener):
 	def __init__(self):
+		debug("__init__")
 		FileNameComplete.is_forced = False
 		FileNameComplete.is_active = False
 
 
 	def on_activated(self, view):
+		debug("on_activated")
 		self.showing_win_drives = False
 		FileNameComplete.is_active = False
 		FileNameComplete.sep = '/'
@@ -212,20 +255,25 @@ class FileNameComplete(sublime_plugin.EventListener):
 
 
 	def on_query_context(self, view, key, operator, operand, match_all):
-		if key == "afn_deleting_slash":  # for reloading autocomplete
-			selection = view.sel()[0]
-			valid = self.at_path_end(view) and selection.empty() and view.substr(selection.a-1) == FileNameComplete.sep
-			return valid == operand
+		selection = getSelection(view)
+		if selection != False:
+			if not allow_to_continue(view, selection):
+				return
+			debug("on_query_context")
+			if key == "afn_deleting_slash":  # for reloading autocomplete
+				valid = self.at_path_end(view) and selection.empty() and view.substr(selection.a-1) == FileNameComplete.sep
+				return valid == operand
 
 
 	def at_path_end(self, view):
-		selection = view.sel()[0]
-		name = view.scope_name(selection.a)
-		if selection.empty() and ('string.end' in name or 'string.quoted.end.js' in name):
-			return True
-		if '.css' in name and view.substr(selection.a) == ')':
-			return True
-		return False
+		selection = getSelection(view)
+		if selection != False:
+			name = view.scope_name(selection.a)
+			if selection.empty() and ('string.end' in name or 'string.quoted.end.js' in name):
+				return True
+			if '.css' in name and view.substr(selection.a) == ')':
+				return True
+			return False
 
 
 ####################################################################### BEFORE #######################################################################
@@ -233,10 +281,13 @@ class FileNameComplete(sublime_plugin.EventListener):
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 	def on_modified_async(self, view):
 ####################################################################### AFTER ########################################################################
-		selections = view.sel()
-		if len( selections ) > 0:
-			selection = selections[0].a
-			txt = view.substr(sublime.Region(selection-4,selection-3))
+		selection = getSelection(view)
+		if selection != False:
+			if not allow_to_continue(view, selection):
+				return
+			debug("on_modified_async")
+			selectionStart = selection.a
+			txt = view.substr(sublime.Region(selectionStart-4,selectionStart-3))
 			if (self.showing_win_drives and txt == FileNameComplete.sep):
 				self.showing_win_drives = False
 				view.run_command('afn_delete_prefixed_slash')
@@ -246,49 +297,37 @@ class FileNameComplete(sublime_plugin.EventListener):
 		if not view.window():
 			return
 
-		view_name = view.name()
-		buffer_id = view.buffer_id()
-		file_name = view.file_name()
-
-		debug( "on_selection_modified_async, buffer_id: " + str( buffer_id ) )
-		debug( "on_selection_modified_async, view_name: " + str( view_name ) )
-		debug( "on_selection_modified_async, file_name: " + str( file_name ) )
-		debug( "on_selection_modified_async, FileNameComplete.is_active:                   " + str( FileNameComplete.is_active ) )
-		debug( "on_selection_modified_async, FileNameComplete.is_forced:                   " + str( FileNameComplete.is_forced ) )
-		debug( "on_selection_modified_async, self.get_setting('afn_use_keybinding', view): " + str( self.get_setting('afn_use_keybinding', view) ) )
-
-		# Open autocomplete automatically if keybinding mode is used
-		if not ( FileNameComplete.is_forced or FileNameComplete.is_active ):
-			return
-
-		debug( "on_selection_modified_async, Here on selection_modified_async" )
-		selection = view.sel()
-
 		# Fix sublime.py, line 641, in __getitem__ raise IndexError()
-		if len( selection ):
-			selection = view.sel()[0]
+		selection = getSelection(view)
+		if selection != False:
+			FileNameComplete.is_active = in_supported_tag(view, selection)
 		else:
 			return
+
+		# Open autocomplete automatically if active or forced
+		if not FileNameComplete.is_forced and not FileNameComplete.is_active:
+			return
+		debug("on_selection_modified_async")
+		# view_name = view.name()
+		# buffer_id = view.buffer_id()
 
 ####################################################################### BEFORE #######################################################################
 		# if selection.empty() and self.at_path_end(view):
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 		if selection.empty():
 ####################################################################### AFTER ########################################################################
+			file_name = view.file_name()
 			scope_contents = view.substr(view.extract_scope(selection.a-1))
 			extracted_path = scope_contents.replace('\r\n', '\n').split('\n')[0]
-			debug( "on_selection_modified_async, extracted_path: " + str( extracted_path ) )
 
 			if('\\' in extracted_path and not '/' in extracted_path):
 				FileNameComplete.sep = '\\'
 			else:
 				FileNameComplete.sep = '/'
 			if view.substr(selection.a-1) == FileNameComplete.sep or len(view.extract_scope(selection.a)) < 3 or not file_name:
-				view.run_command('auto_complete',
-				{'disable_auto_insert': True,
-				'next_completion_if_showing': False})
+				view.run_command('auto_complete', {'disable_auto_insert': True, 'next_completion_if_showing': False})
+				FileNameComplete.is_active = False
 		else:
-			debug( "on_selection_modified_async, FileNameComplete.is_active = False" )
 			FileNameComplete.is_active = False
 
 
@@ -324,95 +363,32 @@ class FileNameComplete(sublime_plugin.EventListener):
 			return sublime.load_settings('autofilename.sublime-settings').get(string)
 
 
-####################################################################### BEFORE #######################################################################
-	# def on_query_completions(self, view, prefix, locations):
-	# 	is_proj_rel = self.get_setting('afn_use_project_root',view)
-	# 	valid_scopes = self.get_setting('afn_valid_scopes',view)
-	# 	blacklist = self.get_setting('afn_blacklist_scopes', view)
-	# 	uses_keybinding = self.get_setting('afn_use_keybinding', view)
-
-	# 	selection = view.sel()[0].a
-	# 	this_dir = ""
-	# 	completions = []
-
-	# 	if "string.regexp.js" in view.scope_name(selection):
-	# 		return []
-
-	# 	if uses_keybinding and not FileNameComplete.is_active:
-	# 		return
-	# 	if not any(s in view.scope_name(selection) for s in valid_scopes):
-	# 		return
-	# 	if any(s in view.scope_name(selection) for s in blacklist):
-	# 		return
-
-	# 	cur_path = os.path.expanduser(self.get_cur_path(view, selection))
-
-
-	# 	if cur_path.startswith('/') or cur_path.startswith('\\'):
-	# 		if is_proj_rel:
-	# 			proot = self.get_setting('afn_proj_root', view)
-	# 			if proot:
-	# 				if not view.file_name() and not os.path.isabs(proot):
-	# 					proot = "/"
-	# 				cur_path = os.path.join(proot, cur_path[1:])
-	# 			else:
-	# 				for f in sublime.active_window().folders():
-	# 					if f in view.file_name():
-	# 						cur_path = f
-	# 	elif not view.file_name():
-	# 		return
-	# 	else:
-	# 		this_dir = os.path.split(view.file_name())[0]
-	# 	this_dir = os.path.join(this_dir, cur_path)
-
-	# 	try:
-	# 		if sublime.platform() == "windows" and len(view.extract_scope(sel)) < 4 and os.path.isabs(cur_path):
-	# 			self.showing_win_drives = True
-	# 			return self.get_drives()
-	# 		self.showing_win_drives = False
-	# 		dir_files = os.listdir(this_dir)
-
-	# 		for d in dir_files:
-	# 			if d.startswith('.'): continue
-	# 			if not '.' in d: d += FileNameComplete.sep
-	# 			completions.append((self.fix_dir(this_dir,d), d))
-	# 		if completions:
-	# 			InsertDimensionsCommand.this_dir = this_dir
-	# 			return completions
-	# 		return
-	# 	except OSError:
-	# 		msg( "get_completions, AutoFileName: could not find " + this_dir )
-	# 		return
-#-----------------------------------------------------------------------------------------------------------------------------------------------------
 	def on_query_completions(self, view, prefix, locations):
-		is_always_enabled = not self.get_setting('afn_use_keybinding', view)
-		if not ( is_always_enabled or FileNameComplete.is_forced or FileNameComplete.is_active ):
+		if not (FileNameComplete.is_forced or FileNameComplete.is_active):
+			return
+		debug("on_query_completions")
+		selection = getSelection(view)
+		if selection != False:
+			selectionStart = selection.a
+		else:
 			return
 
-		selection = view.sel()[0].a
-		debug( "on_query_completions, view_id: " + str( view.id() ) )
-		debug( "on_query_completions, selection: " + str( selection ) )
-
-		if "string.regexp.js" in view.scope_name(selection):
+		if "string.regexp.js" in view.scope_name(selectionStart):
 			return []
 		blacklist = self.get_setting('afn_blacklist_scopes', view)
 		valid_scopes = self.get_setting('afn_valid_scopes',view)
-		debug( "on_query_completions, blacklist: " + str( blacklist ) )
-		debug( "on_query_completions, valid_scopes: " + str( valid_scopes ) )
 
-		if not any(scope in view.scope_name(selection) for scope in valid_scopes):
+		if not any(scope in view.scope_name(selectionStart) for scope in valid_scopes):
 			return
-		if blacklist and any(scope in view.scope_name(selection) for scope in blacklist):
+		if blacklist and any(scope in view.scope_name(selectionStart) for scope in blacklist):
 			return
 
 		self.view = view
-		self.selection = selection
+		self.selection = selectionStart
 		self.start_time = time.time()
 		self.get_completions()
-		debug( "on_query_completions, g_auto_completions: " + str( g_auto_completions ) )
 
 		return g_auto_completions
-####################################################################### AFTER ########################################################################
 
 
 	def get_completions(self):
@@ -421,11 +397,8 @@ class FileNameComplete(sublime_plugin.EventListener):
 		is_proj_rel = self.get_setting('afn_use_project_root',self.view)
 		this_dir = ""
 		cur_path = os.path.expanduser(self.get_cur_path(self.view, self.selection))
-		debug( "get_completions, file_name: " + str( file_name ) )
-		debug( "get_completions, cur_path: " + str( cur_path ) )
 
 		if cur_path.startswith('\\\\') and not cur_path.startswith('\\\\\\') and sublime.platform() == "windows":
-			debug( "get_completions, cur_path.startswith('\\\\')" )
 			self.showing_win_drives = True
 			self.get_drives()
 			return
@@ -446,7 +419,6 @@ class FileNameComplete(sublime_plugin.EventListener):
 			this_dir = os.path.split(file_name)[0]
 			this_dir = os.path.join(this_dir, cur_path)
 
-		debug( "get_completions, this_dir: " + str( this_dir ) )
 		try:
 			if os.path.isabs(cur_path) and (not is_proj_rel or not this_dir):
 				if sublime.platform() == "windows" and len(self.view.extract_scope(self.selection)) < 4:
