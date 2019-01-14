@@ -13,14 +13,18 @@
 	"afn_proj_root": "",
 
 	/**
-	 * Specify which scopes will trigger AutoFileName
+	 * Specify which scopes will trigger AutoFileName.
 	 */
-	"afn_valid_scopes": ["string","css","sass","less","scss"],
+	"afn_valid_scopes": ["string", "css", "sass", "less", "scss"],
 
 	/**
-	 * Turn on if using a template language like Slim and want to
-	 * insert image dimensions.  If using a template language, you also have
-	 * to add it to the valid scopes, above.
+	 * Specify which tags will trigger AutoFileName.
+	 */
+	"afn_valid_tags": ["src", "url", "href"],
+
+	/**
+	 * Turn on if using a template language like Slim and want to insert image dimensions.
+	 * If using a template language, you also have to add it to the valid scopes, above.
 	 */
 	"afn_template_languages": false,
 
@@ -30,9 +34,8 @@
 	"afn_blacklist_scopes": ["string.regexp.js"],
 
 	/**
-	 * Whether or not AutoFileName should insert the width
-	 * and height dimensions after inserting an image into
-	 * an image tag
+	 * Whether or not AutoFileName should insert the width and height dimensions
+	 * after inserting an image into an image tag.
 	 */
 	"afn_insert_dimensions": true,
 
@@ -62,5 +65,5 @@
 	/**
 	 * Set to true to enable more verbose logging in the console.
 	 */
-	"console_debugging": false
+	"afn_console_debugging": false
 }
