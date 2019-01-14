@@ -6,7 +6,7 @@
 		[
 			{ "key": "setting.auto_complete_commit_on_tab" },
 			{ "key": "auto_complete_visible", "operator": "equal", "operand": true },
-			{ "key": "afn_insert_dimensions", "operator": "equal", "operand": true } //{ "key": "setting.afn_insert_dimensions", "operator": "equal", "operand": true },
+			{ "key": "setting.afn_insert_dimensions", "operator": "equal", "operand": true }
 		]
 	},
 	{
@@ -16,7 +16,7 @@
 		[
 			{ "key": "setting.auto_complete_commit_on_tab", "operator": "equal", "operand": false },
 			{ "key": "auto_complete_visible", "operator": "equal", "operand": true },
-			{ "key": "afn_insert_dimensions", "operator": "equal", "operand": true } //{ "key": "setting.afn_insert_dimensions", "operator": "equal", "operand": true },
+			{ "key": "setting.afn_insert_dimensions", "operator": "equal", "operand": true }
 		]
 	},
 	{
