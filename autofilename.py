@@ -10,14 +10,13 @@ import time
 from .getimageinfo import getImageInfo
 
 g_auto_completions = []
-verbose_debugging = sublime.load_settings('autofilename.sublime-settings').get('afn_console_debugging')
-valid_tags = sublime.load_settings('autofilename.sublime-settings').get('afn_valid_tags')
 MAXIMUM_WAIT_TIME = 0.3
 
 def msg(msg):
 	print("[AutoFileName] %s" % msg)
 
 def debug(msg):
+	verbose_debugging = sublime.load_settings('autofilename.sublime-settings').get('afn_console_debugging')
 	if verbose_debugging == True:
 		print("[AutoFileName][DEBUG] %s" % msg)
 
@@ -198,7 +197,7 @@ def getSelection(view):
 
 
 def in_supported_tag(view, selection):
-	supportedTags = valid_tags
+	supportedTags = sublime.load_settings('autofilename.sublime-settings').get('afn_valid_tags')
 	tagRegex = '(\w+)(?:(?=\W)\S)+$'
 	viewContent = view.substr(sublime.Region(0, view.extract_scope(selection.a).a))
 
