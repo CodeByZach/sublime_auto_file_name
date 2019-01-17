@@ -203,7 +203,7 @@ def in_supported_tag(view, selection):
 	viewContent = view.substr(sublime.Region(0, view.extract_scope(selection.a).a))
 
 	matches = re.search(tagRegex, viewContent, re.IGNORECASE)
-	if matches != None:
+	if matches is not None:
 		return matches.group(1) in supportedTags
 	else:
 		return False
