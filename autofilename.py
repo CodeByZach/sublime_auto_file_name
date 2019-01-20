@@ -197,13 +197,19 @@ def getSelection(view):
 
 
 def in_supported_tag(view, selection):
-	supportedTags = sublime.load_settings('autofilename.sublime-settings').get('afn_valid_tags')
+	useValidTags = sublime.load_settings('autofilename.sublime-settings').get('afn_use_valid_tags')
+	validTags = sublime.load_settings('autofilename.sublime-settings').get('afn_valid_tags')
+
+	# Short-circuit and return true if list is empty.
+	if not useValidTags:
+		return True
+
 	tagRegex = '(\w+)(?:(?=\W)\S)+$'
 	viewContent = view.substr(sublime.Region(0, view.extract_scope(selection.a).a))
 
 	matches = re.search(tagRegex, viewContent, re.IGNORECASE)
 	if matches is not None:
-		return matches.group(1) in supportedTags
+		return matches.group(1) in validTags
 	else:
 		return False
 
@@ -213,6 +219,7 @@ def allow_to_continue(view, selection):
 	if not in_supported_tag(view, selection):
 		if not sublime.load_settings('autofilename.sublime-settings').get('afn_use_keybinding'):
 			return False
+		# return False
 	return True
 
 
@@ -311,11 +318,11 @@ class FileNameComplete(sublime_plugin.EventListener):
 		# view_name = view.name()
 		# buffer_id = view.buffer_id()
 
-####################################################################### BEFORE #######################################################################
-		# if selection.empty() and self.at_path_end(view):
-#-----------------------------------------------------------------------------------------------------------------------------------------------------
 		if selection.empty():
-####################################################################### AFTER ########################################################################
+			# Check if keybinding mode is not enabled, and we are at the end of the path before continuing.
+			if not self.get_setting('afn_use_keybinding', view) and self.get_setting('afn_automatic_dropdown_only_eop', view) and not self.at_path_end(view):
+				return
+
 			file_name = view.file_name()
 			scope_contents = view.substr(view.extract_scope(selection.a-1))
 			extracted_path = scope_contents.replace('\r\n', '\n').split('\n')[0]
@@ -404,10 +411,15 @@ class FileNameComplete(sublime_plugin.EventListener):
 			return
 		elif cur_path.startswith('/') or cur_path.startswith('\\'):
 			if is_proj_rel and file_name:
-				proot = self.get_setting('afn_proj_root', self.view)
-				if proot:
-					if not file_name and not os.path.isabs(proot):
-						proot = "/"
+				proot_list = self.get_setting('afn_proj_root', self.view)
+				proot = ""
+
+				if proot_list:
+					for proot_path in proot_list:
+						if os.path.isabs(proot_path):
+							proot = proot_path
+							continue
+
 					cur_path = os.path.join(proot, cur_path[1:])
 
 				for f in sublime.active_window().folders():
@@ -442,5 +454,5 @@ class FileNameComplete(sublime_plugin.EventListener):
 					return
 
 		except OSError:
-			msg( "get_completions, AutoFileName: could not find " + this_dir )
+			debug("get_completions, AutoFileName: could not find " + this_dir)
 			pass
