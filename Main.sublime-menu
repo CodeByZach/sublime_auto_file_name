@@ -17,18 +17,28 @@
 						[
 							{
 								"caption": "Settings",
-								"command": "edit_settings", "args": {
+								"command": "edit_settings",
+								"args":
+								{
 									"base_file": "${packages}/AutoFileName/autofilename.sublime-settings",
 									"default": "{\n$0\n}\n"
+								}
+							},
+							{
+								"caption": "Key Bindings",
+								"command": "edit_settings",
+								"args":
+								{
+									"base_file": "${packages}/AutoFileName/Default.sublime-keymap",
+									"user_file": "${packages}/User/Default (${platform}).sublime-keymap",
+									"default": "[\n$0\n]\n"
 								}
 							},
 							{ "caption": "-" },
 							{
 								"caption": "README",
-								"command": "open_file", "args":
-								{
-									"file": "${packages}/AutoFileName/README.md"
-								}
+								"command": "open_file",
+								"args": { "file": "${packages}/AutoFileName/README.md" }
 							}
 						]
 					}
