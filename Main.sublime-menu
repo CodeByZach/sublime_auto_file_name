@@ -17,17 +17,16 @@
 						[
 							{
 								"caption": "Settings",
-								"command": "z_edit_settings",
+								"command": "edit_settings",
 								"args":
 								{
-									"base_file": "${packages}/AutoFileName/autofilename.sublime-settings",
-									"user_file": "${packages}/User/AutoFileName/autofilename.sublime-settings",
+									"base_file": "${packages}/AutoFileName/AutoFileName.sublime-settings",
 									"default": "{\n\t$0\n}\n"
 								}
 							},
 							{
 								"caption": "Key Bindings",
-								"command": "z_edit_settings",
+								"command": "edit_settings",
 								"args":
 								{
 									"base_file": "${packages}/AutoFileName/Default.sublime-keymap",

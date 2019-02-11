@@ -16,7 +16,7 @@ def msg(msg):
 	print("[AutoFileName] %s" % msg)
 
 def debug(msg):
-	verbose_debugging = sublime.load_settings('autofilename.sublime-settings').get('afn_console_debugging')
+	verbose_debugging = sublime.load_settings('AutoFileName.sublime-settings').get('afn_console_debugging')
 	if verbose_debugging == True:
 		print("[AutoFileName][DEBUG] %s" % msg)
 
@@ -44,7 +44,7 @@ class AfnSettingsPanel(sublime_plugin.WindowCommand):
 
 
 	def on_done(self, value):
-		settings = sublime.load_settings('autofilename.sublime-settings')
+		settings = sublime.load_settings('AutoFileName.sublime-settings')
 		if value == 0:
 			use_pr = settings.get('afn_use_project_root')
 			settings.set('afn_use_project_root', not use_pr)
@@ -57,7 +57,7 @@ class AfnSettingsPanel(sublime_plugin.WindowCommand):
 		if view and view.settings().get(string):
 			return view.settings().get(string)
 		else:
-			return sublime.load_settings('autofilename.sublime-settings').get(string)
+			return sublime.load_settings('AutoFileName.sublime-settings').get(string)
 
 
 
@@ -96,7 +96,7 @@ class InsertDimensionsCommand(sublime_plugin.TextCommand):
 		if view and view.settings().get(string):
 			return view.settings().get(string)
 		else:
-			return sublime.load_settings('autofilename.sublime-settings').get(string)
+			return sublime.load_settings('AutoFileName.sublime-settings').get(string)
 
 
 	def insert_dimensions(self, edit, scope, w, h):
@@ -197,8 +197,8 @@ def getSelection(view):
 
 
 def in_supported_tag(view, selection):
-	useValidTags = sublime.load_settings('autofilename.sublime-settings').get('afn_use_valid_tags')
-	validTags = sublime.load_settings('autofilename.sublime-settings').get('afn_valid_tags')
+	useValidTags = sublime.load_settings('AutoFileName.sublime-settings').get('afn_use_valid_tags')
+	validTags = sublime.load_settings('AutoFileName.sublime-settings').get('afn_valid_tags')
 
 	# Short-circuit and return true if list is empty.
 	if not useValidTags:
@@ -217,7 +217,7 @@ def in_supported_tag(view, selection):
 
 def allow_to_continue(view, selection):
 	if not in_supported_tag(view, selection):
-		if not sublime.load_settings('autofilename.sublime-settings').get('afn_use_keybinding'):
+		if not sublime.load_settings('AutoFileName.sublime-settings').get('afn_use_keybinding'):
 			return False
 		# return False
 	return True
@@ -367,7 +367,7 @@ class FileNameComplete(sublime_plugin.EventListener):
 		if view and view.settings().get(string):
 			return view.settings().get(string)
 		else:
-			return sublime.load_settings('autofilename.sublime-settings').get(string)
+			return sublime.load_settings('AutoFileName.sublime-settings').get(string)
 
 
 	def on_query_completions(self, view, prefix, locations):
