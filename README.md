@@ -1,5 +1,6 @@
-AutoFileName Improved
+AutoFileName
 ============
+[![Latest Release](https://img.shields.io/github/tag/EatBreatheCode/sublime_auto_file_name.svg?label=version)](https://github.com/EatBreatheCode/sublime_auto_file_name/releases)
 
 Autocomplete Filenames in Sublime Text
 --------------------------------------
