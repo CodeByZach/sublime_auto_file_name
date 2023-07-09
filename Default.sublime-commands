@@ -1,10 +1,4 @@
 [
-    {
-        "caption": "AutoFileName: Quick Settings",
-        "command": "afn_settings_panel"
-    },
-    {
-        "caption": "AutoFileName: Auto Complete Now",
-        "command": "afn_show_filenames"
-    }
+    { "caption": "AutoFileName: Quick Settings",    "command": "afn_settings_panel" },
+    { "caption": "AutoFileName: Auto Complete Now", "command": "afn_show_filenames" }
 ]
