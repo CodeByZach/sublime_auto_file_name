@@ -85,7 +85,7 @@ class InsertDimensionsCommand(sublime_plugin.TextCommand):
             selectionStart = selection.a
 
             if name in view.substr(tag_scope):
-                reg = view.find('(?<='+name+'\=)\s*\"\d{1,5}', tag_scope.a)
+                reg = view.find('(?<='+name+'\\=)\\s*\"\\d{1,5}', tag_scope.a)
                 view.replace(edit, reg, '"'+str(dim))
             else:
                 dimension = str(dim)
@@ -204,7 +204,7 @@ def in_supported_tag(view, selection):
     if not useValidTags:
         return True
 
-    tagRegex = '(\w+)(?:(?=\W)\S)+$'
+    tagRegex = r'(\w+)(?:(?=\W)\S)+$'
     viewContent = view.substr(sublime.Region(0, view.extract_scope(selection.a).a))
 
     matches = re.search(tagRegex, viewContent, re.IGNORECASE)
